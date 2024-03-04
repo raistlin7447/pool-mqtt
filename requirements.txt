@@ -1,0 +1,4 @@
+paho-mqtt==2.0.0
+-e git+git://github.com/raistlin7447/pypentair.git@master#egg=pypentair
+pyserial==3.5
+w1thermsensor==2.0.0
