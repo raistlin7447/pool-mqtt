@@ -1,9 +1,16 @@
 import json
 import time
+from typing import Tuple
 
 import paho.mqtt.client as mqtt
 import pypentair
 import serial
+
+try:
+    from w1thermsensor import W1ThermSensor, Unit
+except:
+    pass
+
 
 ROOT_TOPIC = "pool-droid"
 MQTT_BROKER_HOST = "homeassistant.local"
@@ -11,6 +18,8 @@ MQTT_BROKER_USER = "mqtt"
 MQTT_BROKER_PASS = "letmein"
 
 PUMP_PORT = "/dev/ttyUSB0"
+
+W1_THERM_ADDRESS = "012057fccfca"
 
 
 def get_pump_connection():
@@ -23,6 +32,20 @@ def get_pump_connection():
         timeout=1
     )
     return pypentair.Pump(pypentair.ADDRESSES["INTELLIFLO_PUMP_1"], serial_con)
+
+
+def get_temps(digits: int = 1) -> Tuple[float, float]:
+    sensor = W1ThermSensor(sensor_id=W1_THERM_ADDRESS)
+    temp_c, temp_f = sensor.get_temperatures([Unit.DEGREES_C, Unit.DEGREES_F])
+    return round(temp_c, digits), round(temp_f, digits)
+
+
+def get_temp_c(digits: int = 1) -> float:
+    return get_temps(digits=digits)[0]
+
+
+def get_temp_f(digits: int = 1) -> float:
+    return get_temps(digits=digits)[1]
 
 
 def on_connect(client, userdata, flags, reason_code, properties):
@@ -54,4 +77,5 @@ status_message.wait_for_publish()
 while True:
     pump_status = get_pump_connection().status
     client.publish(f"{ROOT_TOPIC}/pump/status", json.dumps(pump_status), qos=1, retain=True)
+    client.publish(f"{ROOT_TOPIC}/cabinet/temperature", get_temp_f(), qos=1, retain=True)
     time.sleep(1)
