@@ -54,7 +54,6 @@ def on_connect(client, userdata, flags, reason_code, properties):
     # The # is a wild card meeting all topics that start with the text before it
     client.subscribe(f"{ROOT_TOPIC}/pump/mode")
 
-
 def on_message(client, userdata, msg):
     print(f"{msg.topic} {msg.payload}")
 
@@ -71,11 +70,15 @@ client.username_pw_set(MQTT_BROKER_USER, MQTT_BROKER_PASS)
 client.connect(MQTT_BROKER_HOST)
 client.loop_start()
 
-status_message = client.publish(f"{ROOT_TOPIC}/status", "online", qos=1)
-status_message.wait_for_publish()
-
 while True:
     pump_status = get_pump_connection().status
-    client.publish(f"{ROOT_TOPIC}/pump/status", json.dumps(pump_status), qos=1, retain=True)
-    client.publish(f"{ROOT_TOPIC}/cabinet/temperature", get_temp_f(), qos=1, retain=True)
+    status_msg = client.publish(f"{ROOT_TOPIC}/status", "online", qos=1)
+    status_msg.wait_for_publish(1)
+
+    pump_msg = client.publish(f"{ROOT_TOPIC}/pump/status", json.dumps(pump_status), qos=1, retain=True)
+    pump_msg.wait_for_publish(1)
+
+    temp_msg = client.publish(f"{ROOT_TOPIC}/cabinet/temperature", get_temp_f(), qos=1, retain=True)
+    temp_msg.wait_for_publish(1)
+
     time.sleep(1)
