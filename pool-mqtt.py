@@ -21,6 +21,54 @@ PUMP_PORT = "/dev/ttyUSB0"
 
 W1_THERM_ADDRESS = "012057fccfca"
 
+DEVICE = {
+    "hw_version": "Raspberry Pi 4 Model B Rev 1.2",
+    "identifiers": "pool-droid_1",
+    "name": "Pool Droid"
+}
+
+
+def send_homeassistant_configs(client: mqtt.Client):
+    ha_autodiscover_base = "homeassistant/sensor"
+
+    pool_pump_power_config = {
+        "name": "Pool Pump Power",
+        "unique_id": "pool_pump_power",
+        "availability_topic": "pool-droid/status",
+        "state_topic": "pool-droid/pump/status",
+        "device_class": "power",
+        "unit_of_measurement": "W",
+        "value_template": "{{ value_json.watts }}",
+        "device": DEVICE
+    }
+    msg = client.publish(f"{ha_autodiscover_base}/pool_pump_power/config", json.dumps(pool_pump_power_config), retain=True)
+    msg.wait_for_publish(1)
+
+    pool_pump_speed_config = {
+        "name": "Pool Pump Speed",
+        "unique_id": "pool_pump_speed",
+        "availability_topic": "pool-droid/status",
+        "state_topic": "pool-droid/pump/status",
+        "unit_of_measurement": "RPM",
+        "icon": "mdi:pump",
+        "value_template": "{{ value_json.rpm }}",
+        "device": DEVICE
+    }
+    msg = client.publish(f"{ha_autodiscover_base}/pool_pump_speed/config", json.dumps(pool_pump_speed_config), retain=True)
+    msg.wait_for_publish(1)
+
+    pool_cab_temp_config = {
+        "name": "Pool Cabinet Temp",
+        "unique_id": "pool_cabinet_temp",
+        "availability_topic": "pool-droid/status",
+        "state_topic": "pool-droid/cabinet/temperature",
+        "device_class": "temperature",
+        "unit_of_measurement": "°F",
+        "value_template": "{{ value }}",
+        "device": DEVICE
+    }
+    msg = client.publish(f"{ha_autodiscover_base}/pool_cabinet_temp/config", json.dumps(pool_cab_temp_config), retain=True)
+    msg.wait_for_publish(1)
 
 def get_pump_connection():
     serial_con = serial.Serial(
@@ -54,6 +102,7 @@ def on_connect(client, userdata, flags, reason_code, properties):
     # The # is a wild card meeting all topics that start with the text before it
     client.subscribe(f"{ROOT_TOPIC}/pump/mode")
 
+
 def on_message(client, userdata, msg):
     print(f"{msg.topic} {msg.payload}")
 
@@ -69,6 +118,8 @@ client.will_set(f"{ROOT_TOPIC}/status", "offline")
 client.username_pw_set(MQTT_BROKER_USER, MQTT_BROKER_PASS)
 client.connect(MQTT_BROKER_HOST)
 client.loop_start()
+
+send_homeassistant_configs(client)
 
 while True:
     pump_status = get_pump_connection().status
