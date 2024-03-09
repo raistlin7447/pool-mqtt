@@ -29,46 +29,51 @@ DEVICE = {
 
 
 def send_homeassistant_configs(client: mqtt.Client):
-    ha_autodiscover_base = "homeassistant/sensor"
+    ha_autodiscover_base = "homeassistant"
 
     pool_pump_power_config = {
         "name": "Pool Pump Power",
         "unique_id": "pool_pump_power",
-        "availability_topic": "pool-droid/status",
-        "state_topic": "pool-droid/pump/status",
+        "availability_topic": f"{ROOT_TOPIC}/status",
+        "state_topic": f"{ROOT_TOPIC}/pump/status",
         "device_class": "power",
         "unit_of_measurement": "W",
         "value_template": "{{ value_json.watts }}",
         "device": DEVICE
     }
-    msg = client.publish(f"{ha_autodiscover_base}/pool_pump_power/config", json.dumps(pool_pump_power_config), retain=True)
+    msg = client.publish(f"{ha_autodiscover_base}/sensor/pool_pump_power/config", json.dumps(pool_pump_power_config), retain=True)
     msg.wait_for_publish(1)
 
     pool_pump_speed_config = {
         "name": "Pool Pump Speed",
         "unique_id": "pool_pump_speed",
-        "availability_topic": "pool-droid/status",
-        "state_topic": "pool-droid/pump/status",
+        "availability_topic": f"{ROOT_TOPIC}/status",
+        "command_topic": f"{ROOT_TOPIC}/set/pump/speed",
+        "state_topic": f"{ROOT_TOPIC}/pump/status",
         "unit_of_measurement": "RPM",
         "icon": "mdi:pump",
+        "min": 0,
+        "max": 3000,
+        "step": 50,
         "value_template": "{{ value_json.rpm }}",
         "device": DEVICE
     }
-    msg = client.publish(f"{ha_autodiscover_base}/pool_pump_speed/config", json.dumps(pool_pump_speed_config), retain=True)
+    msg = client.publish(f"{ha_autodiscover_base}/number/pool_pump_speed/config", json.dumps(pool_pump_speed_config), retain=True)
     msg.wait_for_publish(1)
 
     pool_cab_temp_config = {
         "name": "Pool Cabinet Temp",
         "unique_id": "pool_cabinet_temp",
-        "availability_topic": "pool-droid/status",
-        "state_topic": "pool-droid/cabinet/temperature",
+        "availability_topic": f"{ROOT_TOPIC}/status",
+        "state_topic": f"{ROOT_TOPIC}/cabinet/temperature",
         "device_class": "temperature",
         "unit_of_measurement": "°F",
         "value_template": "{{ value }}",
         "device": DEVICE
     }
-    msg = client.publish(f"{ha_autodiscover_base}/pool_cabinet_temp/config", json.dumps(pool_cab_temp_config), retain=True)
+    msg = client.publish(f"{ha_autodiscover_base}/sensor/pool_cabinet_temp/config", json.dumps(pool_cab_temp_config), retain=True)
     msg.wait_for_publish(1)
+
 
 def get_pump_connection():
     serial_con = serial.Serial(
@@ -100,7 +105,7 @@ def on_connect(client, userdata, flags, reason_code, properties):
     print(f"Connected with result code {reason_code}")
 
     # The # is a wild card meeting all topics that start with the text before it
-    client.subscribe(f"{ROOT_TOPIC}/pump/mode")
+    client.subscribe(f"{ROOT_TOPIC}/set/#")
 
 
 def on_message(client, userdata, msg):
