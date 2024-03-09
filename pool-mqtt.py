@@ -112,7 +112,7 @@ def on_message(client, userdata, msg):
     print(f"{msg.topic} {msg.payload}", flush=True)
 
     if msg.topic == f"{ROOT_TOPIC}/set/pump/speed":
-        pump.rpm = int(msg.payload)
+        pump.trpm = int(msg.payload)
         print(f"Set pump speed to {msg.payload}", flush=True)
 
 
