@@ -60,7 +60,7 @@ def send_homeassistant_configs(client: mqtt.Client):
         "unit_of_measurement": "RPM",
         "icon": "mdi:pump",
         "value_template": "{{ value_json.mode }}",
-        "options": PUMP_MODE_MAP_NAME.keys(),
+        "options": list(PUMP_MODE_MAP_NAME.keys()),
         "device": DEVICE
     }
     msg = client.publish(f"{ha_autodiscover_base}/select/pool_pump_speed_mode/config", json.dumps(pool_pump_speed_mode_config), retain=True)
