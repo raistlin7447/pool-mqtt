@@ -24,7 +24,7 @@ W1_THERM_ADDRESS = "012057fccfca"
 DEVICE = {
     "hw_version": "Raspberry Pi 4 Model B Rev 1.2",
     "identifiers": "pool-droid_1",
-    "name": "Pool Droid"
+    "name": "Pool"
 }
 
 
@@ -32,7 +32,7 @@ def send_homeassistant_configs(client: mqtt.Client):
     ha_autodiscover_base = "homeassistant"
 
     pool_pump_power_config = {
-        "name": "Pool Pump Power",
+        "name": "Pump Power",
         "unique_id": "pool_pump_power",
         "availability_topic": f"{ROOT_TOPIC}/status",
         "state_topic": f"{ROOT_TOPIC}/pump/status",
@@ -45,7 +45,7 @@ def send_homeassistant_configs(client: mqtt.Client):
     msg.wait_for_publish(1)
 
     pool_pump_speed_config = {
-        "name": "Pool Pump Speed",
+        "name": "Pump Speed",
         "unique_id": "pool_pump_speed",
         "availability_topic": f"{ROOT_TOPIC}/status",
         "command_topic": f"{ROOT_TOPIC}/set/pump/speed",
@@ -62,7 +62,7 @@ def send_homeassistant_configs(client: mqtt.Client):
     msg.wait_for_publish(1)
 
     pool_cab_temp_config = {
-        "name": "Pool Cabinet Temp",
+        "name": "Cabinet Temp",
         "unique_id": "pool_cabinet_temp",
         "availability_topic": f"{ROOT_TOPIC}/status",
         "state_topic": f"{ROOT_TOPIC}/cabinet/temperature",
