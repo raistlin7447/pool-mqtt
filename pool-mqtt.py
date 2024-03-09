@@ -1,25 +1,15 @@
 import json
 import time
-from typing import Tuple
 
 import paho.mqtt.client as mqtt
-import pypentair
-import serial
 
-try:
-    from w1thermsensor import W1ThermSensor, Unit
-except:
-    pass
-
+from utils import format_pump_status, get_temp_f, get_pump_connection, PUMP_MODE_MAP_NAME
 
 ROOT_TOPIC = "pool-droid"
 MQTT_BROKER_HOST = "homeassistant.local"
 MQTT_BROKER_USER = "mqtt"
 MQTT_BROKER_PASS = "letmein"
 
-PUMP_PORT = "/dev/ttyUSB0"
-
-W1_THERM_ADDRESS = "012057fccfca"
 
 DEVICE = {
     "hw_version": "Raspberry Pi 4 Model B Rev 1.2",
@@ -61,6 +51,21 @@ def send_homeassistant_configs(client: mqtt.Client):
     msg = client.publish(f"{ha_autodiscover_base}/number/pool_pump_speed/config", json.dumps(pool_pump_speed_config), retain=True)
     msg.wait_for_publish(1)
 
+    pool_pump_speed_mode_config = {
+        "name": "Pump Speed Mode",
+        "unique_id": "pool_pump_speed_mode",
+        "availability_topic": f"{ROOT_TOPIC}/status",
+        "command_topic": f"{ROOT_TOPIC}/set/pump/speed_mode",
+        "state_topic": f"{ROOT_TOPIC}/pump/status",
+        "unit_of_measurement": "RPM",
+        "icon": "mdi:pump",
+        "value_template": "{{ value_json.mode }}",
+        "options": PUMP_MODE_MAP_NAME.keys(),
+        "device": DEVICE
+    }
+    msg = client.publish(f"{ha_autodiscover_base}/select/pool_pump_speed_mode/config", json.dumps(pool_pump_speed_mode_config), retain=True)
+    msg.wait_for_publish(1)
+
     pool_cab_temp_config = {
         "name": "Cabinet Temp",
         "unique_id": "pool_cabinet_temp",
@@ -75,30 +80,7 @@ def send_homeassistant_configs(client: mqtt.Client):
     msg.wait_for_publish(1)
 
 
-def get_pump_connection():
-    serial_con = serial.Serial(
-        port=PUMP_PORT,
-        baudrate=9600,
-        bytesize=serial.EIGHTBITS,
-        parity=serial.PARITY_NONE,
-        stopbits=serial.STOPBITS_ONE,
-        timeout=1
-    )
-    return pypentair.Pump(pypentair.ADDRESSES["INTELLIFLO_PUMP_1"], serial_con)
 pump = get_pump_connection()
-
-def get_temps(digits: int = 1) -> Tuple[float, float]:
-    sensor = W1ThermSensor(sensor_id=W1_THERM_ADDRESS)
-    temp_c, temp_f = sensor.get_temperatures([Unit.DEGREES_C, Unit.DEGREES_F])
-    return round(temp_c, digits), round(temp_f, digits)
-
-
-def get_temp_c(digits: int = 1) -> float:
-    return get_temps(digits=digits)[0]
-
-
-def get_temp_f(digits: int = 1) -> float:
-    return get_temps(digits=digits)[1]
 
 
 def on_connect(client, userdata, flags, reason_code, properties):
@@ -114,6 +96,15 @@ def on_message(client, userdata, msg):
     if msg.topic == f"{ROOT_TOPIC}/set/pump/speed":
         pump.trpm = int(msg.payload)
         print(f"Set pump speed to {msg.payload}", flush=True)
+
+    if msg.topic == f"{ROOT_TOPIC}/set/pump/mode":
+        mode = PUMP_MODE_MAP_NAME[msg.payload]
+        if mode <= 8:
+            speed_str = f"SPEED_{mode:d}"
+        if mode == 13:
+            speed_str = f"QUICK_CLEAN"
+        #pump.running_speed = speed_str
+        print(f"Set pump speed to {speed_str}", flush=True)
 
 
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
@@ -131,10 +122,10 @@ client.loop_start()
 send_homeassistant_configs(client)
 
 while True:
-    pump_status = pump.status
     status_msg = client.publish(f"{ROOT_TOPIC}/status", "online", qos=1)
     status_msg.wait_for_publish(1)
 
+    pump_status = format_pump_status(pump.status)
     pump_msg = client.publish(f"{ROOT_TOPIC}/pump/status", json.dumps(pump_status), qos=1, retain=True)
     pump_msg.wait_for_publish(1)
 
