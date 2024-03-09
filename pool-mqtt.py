@@ -98,7 +98,7 @@ def on_message(client, userdata, msg):
         print(f"Set pump speed to {msg.payload}", flush=True)
 
     if msg.topic == f"{ROOT_TOPIC}/set/pump/mode":
-        mode = PUMP_MODE_MAP_NAME[msg.payload]
+        mode = PUMP_MODE_MAP_NAME[str(msg.payload)]
         if mode <= 8:
             speed_str = f"SPEED_{mode:d}"
         if mode == 13:
