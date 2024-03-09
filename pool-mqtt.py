@@ -51,11 +51,11 @@ def send_homeassistant_configs(client: mqtt.Client):
     msg = client.publish(f"{ha_autodiscover_base}/number/pool_pump_speed/config", json.dumps(pool_pump_speed_config), retain=True)
     msg.wait_for_publish(1)
 
-    pool_pump_speed_mode_config = {
-        "name": "Pump Speed Mode",
-        "unique_id": "pool_pump_speed_mode",
+    pool_pump_mode_config = {
+        "name": "Pump Mode",
+        "unique_id": "pool_pump_mode",
         "availability_topic": f"{ROOT_TOPIC}/status",
-        "command_topic": f"{ROOT_TOPIC}/set/pump/speed_mode",
+        "command_topic": f"{ROOT_TOPIC}/set/pump/mode",
         "state_topic": f"{ROOT_TOPIC}/pump/status",
         "unit_of_measurement": "RPM",
         "icon": "mdi:pump",
@@ -63,7 +63,7 @@ def send_homeassistant_configs(client: mqtt.Client):
         "options": list(PUMP_MODE_MAP_NAME.keys()),
         "device": DEVICE
     }
-    msg = client.publish(f"{ha_autodiscover_base}/select/pool_pump_speed_mode/config", json.dumps(pool_pump_speed_mode_config), retain=True)
+    msg = client.publish(f"{ha_autodiscover_base}/select/pool_pump_mode/config", json.dumps(pool_pump_mode_config), retain=True)
     msg.wait_for_publish(1)
 
     pool_cab_temp_config = {
