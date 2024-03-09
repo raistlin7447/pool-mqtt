@@ -64,7 +64,10 @@ def format_pump_status(status):
     else:
         status['run'] = f"Unknown value {run}"
 
-    status['mode'] = PUMP_MODE_MAP[status['mode']]
+    try:
+        status['mode'] = PUMP_MODE_MAP[status['mode']]
+    except KeyError:
+        print(f"Unknown pump mode {status['mode']}", flush=True)
 
     timer_m = status['timer'][0]
     timer_s = status['timer'][1]
