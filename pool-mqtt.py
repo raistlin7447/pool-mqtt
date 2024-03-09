@@ -85,7 +85,7 @@ def get_pump_connection():
         timeout=1
     )
     return pypentair.Pump(pypentair.ADDRESSES["INTELLIFLO_PUMP_1"], serial_con)
-
+pump = get_pump_connection()
 
 def get_temps(digits: int = 1) -> Tuple[float, float]:
     sensor = W1ThermSensor(sensor_id=W1_THERM_ADDRESS)
@@ -102,14 +102,18 @@ def get_temp_f(digits: int = 1) -> float:
 
 
 def on_connect(client, userdata, flags, reason_code, properties):
-    print(f"Connected with result code {reason_code}")
+    print(f"Connected with result code {reason_code}", flush=True)
 
     # The # is a wild card meeting all topics that start with the text before it
     client.subscribe(f"{ROOT_TOPIC}/set/#")
 
 
 def on_message(client, userdata, msg):
-    print(f"{msg.topic} {msg.payload}")
+    print(f"{msg.topic} {msg.payload}", flush=True)
+
+    if msg.topic == f"{ROOT_TOPIC}/set/pump/speed":
+        pump.rpm = int(msg.payload)
+        print(f"Set pump speed to {msg.payload}", flush=True)
 
 
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
@@ -127,7 +131,7 @@ client.loop_start()
 send_homeassistant_configs(client)
 
 while True:
-    pump_status = get_pump_connection().status
+    pump_status = pump.status
     status_msg = client.publish(f"{ROOT_TOPIC}/status", "online", qos=1)
     status_msg.wait_for_publish(1)
 
