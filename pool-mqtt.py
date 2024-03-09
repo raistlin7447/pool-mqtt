@@ -103,7 +103,7 @@ def on_message(client, userdata, msg):
             speed_str = f"SPEED_{mode:d}"
         if mode == 13:
             speed_str = f"QUICK_CLEAN"
-        #pump.running_speed = speed_str
+        pump.running_speed = speed_str
         print(f"Set pump speed to {speed_str}", flush=True)
 
 
