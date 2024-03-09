@@ -1,4 +1,4 @@
-import enum
+from typing import Tuple
 
 import pypentair
 import serial
