@@ -99,12 +99,21 @@ def on_message(client, userdata, msg):
 
     if msg.topic == f"{ROOT_TOPIC}/set/pump/mode":
         mode = PUMP_MODE_MAP_NAME[msg.payload.decode()]
-        if mode <= 8:
-            speed_str = f"SPEED_{mode:d}"
-        if mode == 13:
-            speed_str = f"QUICK_CLEAN"
-        pump.running_speed = speed_str
-        print(f"Set pump speed to {speed_str}", flush=True)
+        if mode == 0:
+            if pump.power:
+                pump.power = False
+                print(f"Turned pump off", flush=True)
+        else:
+            if not pump.power:
+                pump.power = True
+                print(f"Turned pump On", flush=True)
+
+            if mode <= 8:
+                speed_str = f"SPEED_{mode:d}"
+            if mode == 13:
+                speed_str = f"QUICK_CLEAN"
+            pump.running_speed = speed_str
+            print(f"Set pump speed to {speed_str}", flush=True)
 
 
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)

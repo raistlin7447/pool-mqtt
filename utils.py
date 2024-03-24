@@ -40,6 +40,7 @@ def get_temp_f(digits: int = 1) -> float:
 
 
 PUMP_MODE_MAP = {
+    0: "Off",
     1: "Speed 1",
     2: "Speed 2",
     3: "Speed 3",
